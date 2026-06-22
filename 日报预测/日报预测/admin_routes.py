@@ -148,7 +148,7 @@ def reset_password(
 
 @router.delete("/users/{user_id}")
 def delete_user(user_id: int, user: dict = Depends(require_admin)):
-    """软删除（is_active=0）"""
+    """硬删除：从数据库中永久移除"""
     conn = get_db()
     try:
         row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
@@ -157,12 +157,8 @@ def delete_user(user_id: int, user: dict = Depends(require_admin)):
         if user_id == user["id"]:
             raise HTTPException(status_code=400, detail="不能删除自己")
 
-        new_version = row["token_version"] + 1
-        conn.execute(
-            "UPDATE users SET is_active = 0, token_version = ? WHERE id = ?",
-            (new_version, user_id),
-        )
+        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
         conn.commit()
-        return {"message": "用户已禁用"}
+        return {"message": "用户已删除"}
     finally:
         conn.close()
