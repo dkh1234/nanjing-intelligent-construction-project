@@ -252,7 +252,8 @@ def process_uploaded_file(file_bytes: bytes, filename: str, project_code: str):
 @app.post("/api/daily/upload-and-predict")
 async def upload_and_predict(
     file: UploadFile = File(...),
-    predict_weeks: int = Form(1)
+    predict_weeks: int = Form(1),
+    current_user: dict = Depends(get_current_user),
 ):
     """上传日报文件，解析并预测"""
     try:
