@@ -1,0 +1,50 @@
+============================================================
+ 启动与关闭步骤
+============================================================
+
+
+一、启动步骤
+============================================================
+
+1. 启动后端 API（必须先启动）
+   打开终端，执行:
+
+   cd 日报预测/日报预测
+   .\.venv\Scripts\python.exe api_server.py
+
+   启动成功标志:
+     INFO:     Uvicorn running on http://0.0.0.0:8000
+
+   验证: 浏览器访问 http://127.0.0.1:8000/api/daily/health
+        返回 {"status":"ok"} 即正常
+
+   API 文档: http://127.0.0.1:8000/docs
+
+
+2. 启动前端页面
+   打开另一个终端，执行:
+
+   cd smart-duration-prediction
+   npm install          (仅首次需要)
+   npx vite --port 3000 --host
+
+   启动成功标志:
+     VITE v5.x  ready in xxx ms
+
+   前端页面登录网址  http://localhost:3000/#/login
+
+
+二、关闭步骤
+============================================================
+
+
+PowerShell 一键关闭:
+
+   $conns = Get-NetTCPConnection -LocalPort 8000,3000 -ErrorAction SilentlyContinue | Where-Object { $_.OwningProcess -ne 0 }
+   if ($conns) { $conns | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force; Write-Host "已关闭进程 $($_.OwningProcess) (端口 $($_.LocalPort))" } } else { Write-Host "端口 8000/3000 上没有运行中的进程" }
+
+
+
+
+
+
