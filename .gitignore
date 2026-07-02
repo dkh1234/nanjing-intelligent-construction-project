@@ -31,3 +31,7 @@ Thumbs.db
 # Claude 本地配置（可能含敏感信息）
 .claude/settings.json
 .claude/settings.local.json
+
+# 备份/工具目录（不需上传）
+smart-duration-prediction-git-backup/
+.codex/
