@@ -24,7 +24,13 @@ const routes = [
     meta: { title: '日报预测', requiresAuth: true }
   },
   {
-    path: '/admin/users',
+    path: '/planning-progress',
+      name: 'PlanningProgress',
+      component: () => import('@/views/PlanningProgress.vue'),
+      meta: { title: '策划书解析', requiresAuth: true }
+    },
+    {
+      path: '/admin/users',
     name: 'UserManagement',
     component: () => import('@/views/UserManagement.vue'),
     meta: { title: '用户管理', requiresAuth: true, requiresAdmin: true }
