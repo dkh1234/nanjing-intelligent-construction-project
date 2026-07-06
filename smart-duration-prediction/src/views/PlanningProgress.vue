@@ -12,7 +12,7 @@
         <el-icon :size="16" color="#1677ff"><Upload /></el-icon>
         <span>1. 上传策划书文档</span>
       </div>
-      <p class="card-section-desc">支持 .docx 格式，文件大小不超过 20MB</p>
+      <p class="card-section-desc">支持 .docx / .doc 格式，文件大小不超过 20MB</p>
 
       <div
         class="upload-zone"
@@ -26,7 +26,7 @@
         <div v-if="!uploadFile && !loading" class="upload-inner">
           <el-icon :size="48" color="#1677ff"><UploadFilled /></el-icon>
           <p class="upload-main">点击或拖拽文件到此处上传</p>
-          <p class="upload-hint">支持 .docx 格式</p>
+          <p class="upload-hint">支持 .docx / .doc 格式</p>
         </div>
 
         <!-- 解析中 -->

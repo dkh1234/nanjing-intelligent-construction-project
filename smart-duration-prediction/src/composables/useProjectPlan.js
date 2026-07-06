@@ -27,7 +27,7 @@ export function useProjectPlan() {
     // 文件格式校验
     const ext = file.name.split('.').pop().toLowerCase()
     if (!['docx', 'doc'].includes(ext)) {
-      error.value = '仅支持 .docx 格式文件'
+      error.value = '仅支持 .docx / .doc 格式文件'
       return
     }
 

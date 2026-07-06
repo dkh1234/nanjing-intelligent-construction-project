@@ -38,7 +38,7 @@ async def upload_and_parse(
     if ext not in ("docx", "doc"):
         raise HTTPException(
             status_code=400,
-            detail=f"不支持的文件格式: .{ext}，请上传 .docx 文件"
+            detail=f"不支持的文件格式: .{ext}，请上传 .docx 或 .doc 文件"
         )
 
     # 读取文件

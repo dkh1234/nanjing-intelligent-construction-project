@@ -10,6 +10,9 @@
 
 import re
 import os
+import subprocess
+import tempfile
+import shutil
 from io import BytesIO
 from datetime import datetime
 from typing import Optional
@@ -445,6 +448,225 @@ def _extract_task_items(cell_text: str) -> list:
 # 主解析入口
 # ============================================================
 
+# ============================================================
+# .doc 格式转换
+# ============================================================
+
+def _find_libreoffice() -> Optional[str]:
+    """查找 LibreOffice 可执行文件路径"""
+    # Windows 常见路径
+    candidates = [
+        "soffice",
+        "soffice.exe",
+        r"C:\Program Files\LibreOffice\program\soffice.exe",
+        r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+    ]
+    for path in candidates:
+        if shutil.which(path) or os.path.isfile(path):
+            return path
+    # 尝试从注册表查找（Windows）
+    try:
+        import winreg
+        for root in [winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER]:
+            for sub in [r"SOFTWARE\LibreOffice", r"SOFTWARE\WOW6432Node\LibreOffice"]:
+                try:
+                    with winreg.OpenKey(root, sub) as key:
+                        return os.path.join(winreg.QueryValueEx(key, "Path")[0], "program", "soffice.exe")
+                except OSError:
+                    pass
+    except Exception:
+        pass
+    return None
+
+
+def _convert_doc_to_docx_bytes(file_bytes: bytes, filename: str) -> bytes:
+    """将 .doc 文件转换为 .docx 格式
+
+    尝试方案（按优先级）：
+    1. LibreOffice headless 转换（最可靠，保留表格）
+    2. python-docx 直接打开（有些 .doc 实际是 .docx 格式）
+    3. 二进制文本提取（兜底方案）
+    """
+    # 方案1: 先尝试直接用 python-docx 打开（可能是伪装的 .docx）
+    try:
+        doc = Document(BytesIO(file_bytes))
+        # 如果段落数/表格数 > 0，说明确实是 docx 格式
+        if len(doc.paragraphs) > 0 or len(doc.tables) > 0:
+            return file_bytes
+    except Exception:
+        pass
+
+    # 方案2: 使用 LibreOffice 转换
+    libreoffice = _find_libreoffice()
+    if libreoffice:
+        tmpdir = tempfile.mkdtemp()
+        try:
+            # 写入原始 .doc 文件
+            doc_path = os.path.join(tmpdir, filename)
+            with open(doc_path, "wb") as f:
+                f.write(file_bytes)
+
+            # 调用 LibreOffice 转换
+            result = subprocess.run(
+                [libreoffice, "--headless", "--convert-to", "docx", "--outdir", tmpdir, doc_path],
+                capture_output=True, text=True, timeout=60,
+                env={**os.environ, "HOME": tmpdir}
+            )
+
+            # 查找生成的 .docx 文件
+            base = os.path.splitext(filename)[0]
+            out_path = os.path.join(tmpdir, base + ".docx")
+            if os.path.isfile(out_path):
+                with open(out_path, "rb") as f:
+                    return f.read()
+
+            # 可能有其他命名
+            for fname in os.listdir(tmpdir):
+                if fname.endswith(".docx"):
+                    with open(os.path.join(tmpdir, fname), "rb") as f:
+                        return f.read()
+        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            pass
+        finally:
+            try:
+                shutil.rmtree(tmpdir, ignore_errors=True)
+            except Exception:
+                pass
+
+    # 方案3: 尝试 antiword 命令行工具
+    try:
+        result = subprocess.run(
+            ["antiword", "-"], input=file_bytes, capture_output=True, timeout=30
+        )
+        text = result.stdout.decode("utf-8", errors="ignore")
+        if text and len(text.strip()) > 100:
+            # 将纯文本包装成最小化 .docx
+            from docx import Document as NewDoc
+            doc = NewDoc()
+            for line in text.split("\n"):
+                if line.strip():
+                    doc.add_paragraph(line.strip())
+            buf = BytesIO()
+            doc.save(buf)
+            return buf.getvalue()
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    # 方案4: 无法转换，给出明确错误
+    raise RuntimeError(
+        "无法解析 .doc 格式文件。\n"
+        "请使用以下任一方式：\n"
+        "1. 用 Microsoft Word 或 WPS 打开文件，另存为 .docx 格式后上传\n"
+        "2. 安装 LibreOffice 后重试（支持自动转换）\n"
+        "3. 直接上传已有的 .docx 版本文件"
+    )
+
+
+def _extract_text_from_binary_doc(file_bytes: bytes) -> bytes:
+    """从 OLE2 (.doc) 二进制文件中尽可能提取文本
+
+    将提取的文本包装成简化版 .docx XML 格式，
+    以便现有解析流程能处理。
+    """
+    text = _extract_raw_text_from_ole(file_bytes)
+
+    if not text or len(text.strip()) < 50:
+        raise RuntimeError(
+            "无法读取 .doc 文件内容。请使用 Microsoft Word 或 WPS 将文件另存为 .docx 格式后重新上传。"
+        )
+
+    # 将纯文本包装成最小化的 .docx
+    # python-docx 可以读取这个简单结构
+    from docx import Document as NewDoc
+    doc = NewDoc()
+    for line in text.split("\n"):
+        if line.strip():
+            doc.add_paragraph(line.strip())
+
+    buf = BytesIO()
+    doc.save(buf)
+    return buf.getvalue()
+
+
+def _extract_raw_text_from_ole(file_bytes: bytes) -> str:
+    """从 OLE2 容器中提取可读文本"""
+    try:
+        import olefile
+    except ImportError:
+        # 无 olefile，用简单二进制扫描
+        return _scan_binary_for_text(file_bytes)
+
+    try:
+        ole = olefile.OleFileIO(file_bytes)
+        # Word文档文本通常在 WordDocument 流中
+        # 尝试读取主文本流
+        text_parts = []
+
+        # 列出所有流
+        for stream_name in ole.listdir():
+            stream_path = "/".join(stream_name)
+            try:
+                data = ole.openstream(stream_name).read()
+                # 尝试解码为 UTF-16LE
+                try:
+                    decoded = data.decode("utf-16-le", errors="ignore")
+                    # 过滤出可读的中英文文本片段
+                    readable = "".join(
+                        c for c in decoded
+                        if c.isprintable() or c in "\n\r\t"
+                    )
+                    if len(readable) > 100:
+                        text_parts.append(readable)
+                except Exception:
+                    pass
+            except Exception:
+                pass
+
+        ole.close()
+        return "\n".join(text_parts)
+    except Exception:
+        return _scan_binary_for_text(file_bytes)
+
+
+def _scan_binary_for_text(file_bytes: bytes) -> str:
+    """从二进制数据中扫描提取可读的中英文文本"""
+    # 尝试 UTF-16LE 解码
+    try:
+        text = file_bytes.decode("utf-16-le", errors="ignore")
+    except Exception:
+        text = file_bytes.decode("latin-1", errors="ignore")
+
+    # 过滤出有效的文本段落（至少包含2个中文字符或足够长度的英文单词）
+    lines = []
+    current = []
+    for ch in text:
+        if ch.isprintable() or ch in "\t":
+            current.append(ch)
+        else:
+            if current:
+                line = "".join(current).strip()
+                if len(line) > 3 and _has_readable_content(line):
+                    lines.append(line)
+                current = []
+    if current:
+        line = "".join(current).strip()
+        if len(line) > 3:
+            lines.append(line)
+
+    return "\n".join(lines)
+
+
+def _has_readable_content(text: str) -> bool:
+    """检查文本是否包含有意义的内容（中文或英文单词）"""
+    chinese_chars = len(re.findall(r"[一-鿿]", text))
+    alpha_chars = len(re.findall(r"[a-zA-Z]", text))
+    return chinese_chars >= 2 or alpha_chars >= 5
+
+
+# ============================================================
+# 主解析入口
+# ============================================================
+
 def parse_planning_document(file_bytes: bytes, filename: str) -> dict:
     """解析策划书文档，返回完整结构化数据
 
@@ -463,12 +685,21 @@ def parse_planning_document(file_bytes: bytes, filename: str) -> dict:
     ext = os.path.splitext(filename)[1].lower()
 
     if ext not in (".docx", ".doc"):
-        raise RuntimeError(f"不支持的文件格式: {ext}，请上传 .docx 文件")
+        raise RuntimeError(f"不支持的文件格式: {ext}，请上传 .docx 或 .doc 文件")
+
+    # .doc 格式先转换为 .docx
+    if ext == ".doc":
+        try:
+            file_bytes = _convert_doc_to_docx_bytes(file_bytes, filename)
+        except RuntimeError:
+            raise
+        except Exception as e:
+            raise RuntimeError(f".doc 文件转换失败: {str(e)}")
 
     try:
         doc = Document(BytesIO(file_bytes))
     except Exception as e:
-        raise RuntimeError(f"无法打开文档: {str(e)}")
+        raise RuntimeError(f"无法打开文档: {str(e)}。请确保上传的是有效的 .docx 或 .doc 文件。")
 
     # 提取段落文本
     paragraphs = [p.text for p in doc.paragraphs]
