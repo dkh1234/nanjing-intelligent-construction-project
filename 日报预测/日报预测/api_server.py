@@ -313,7 +313,9 @@ def health():
 # ============================================================
 
 from admin_routes import router as admin_router
+from planning_routes import router as planning_router
 app.include_router(admin_router)
+app.include_router(planning_router)
 
 # ============================================================
 # 6. 启动

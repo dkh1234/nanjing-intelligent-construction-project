@@ -37,7 +37,7 @@
 
 <script setup>
 import {
-  Timer, DataAnalysis, Setting,
+  Timer, DataAnalysis, TrendCharts, Setting,
   Fold, Expand
 } from '@element-plus/icons-vue'
 import { computed } from 'vue'
@@ -56,6 +56,7 @@ const menuItems = computed(() => {
   const items = [
     { path: '/prediction',   label: '工期预测', icon: Timer },
     { path: '/daily-report', label: '日报预测', icon: DataAnalysis },
+      { path: '/planning-progress', label: '策划书解析', icon: TrendCharts },
   ]
   if (authStore.isAdmin) {
     items.push({ path: '/admin/users', label: '用户管理', icon: Setting })
