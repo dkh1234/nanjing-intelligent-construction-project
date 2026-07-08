@@ -1,0 +1,147 @@
+{
+  "project_name": "测试项目-XX大桥工程",
+  "report_date": "2025-09-01",
+  "milestones_alert": [
+    {
+      "milestone_name": "桩基工程完工",
+      "target_date": "2025-08-01",
+      "alert_level": "红色",
+      "delay_days": 45,
+      "reason": "于2025-09-15完成，延迟45天"
+    },
+    {
+      "milestone_name": "墩身施工完成",
+      "target_date": "2025-11-01",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "进行中，尚未到目标日期"
+    },
+    {
+      "milestone_name": "主梁合龙",
+      "target_date": "2026-03-15",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，暂无状态数据"
+    },
+    {
+      "milestone_name": "桥面铺装完成",
+      "target_date": "2026-05-01",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，暂无状态数据"
+    },
+    {
+      "milestone_name": "竣工验收",
+      "target_date": "2026-05-31",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，暂无状态数据"
+    }
+  ],
+  "critical_path_alert": [
+    {
+      "workshop": "A标段-主桥",
+      "process_name": "主墩桩基施工",
+      "target_date": "2025-07-15",
+      "actual_date": "2025-09-01",
+      "alert_level": "红色",
+      "delay_days": 48,
+      "reason": "严重延迟48天完成"
+    },
+    {
+      "workshop": "A标段-主桥",
+      "process_name": "主墩承台浇筑",
+      "target_date": "2025-09-01",
+      "actual_date": null,
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，正常推进中"
+    },
+    {
+      "workshop": "A标段-主桥",
+      "process_name": "主梁悬浇施工",
+      "target_date": "2026-02-28",
+      "actual_date": null,
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，正常推进中"
+    },
+    {
+      "workshop": "B标段-引桥",
+      "process_name": "引桥桩基施工",
+      "target_date": "2025-08-01",
+      "actual_date": null,
+      "alert_level": "红色",
+      "delay_days": 31,
+      "reason": "已超目标日期31天，尚未完成（已完成24根，剩余36根）"
+    },
+    {
+      "workshop": "B标段-引桥",
+      "process_name": "引桥梁板架设",
+      "target_date": "2026-01-15",
+      "actual_date": null,
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，正常推进中"
+    },
+    {
+      "workshop": "B标段-引桥",
+      "process_name": "引桥附属工程",
+      "target_date": "2026-04-30",
+      "actual_date": null,
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，正常推进中"
+    }
+  ],
+  "progress_curve_alert": [
+    {
+      "month_label": "2025-06",
+      "planned_pct": 0.0,
+      "actual_pct": 26.0,
+      "deviation_pct": 26.0,
+      "alert_level": "绿色",
+      "reason": "实际进度 26.0% ≥ 计划进度 0.0%，偏差 +26.0%"
+    },
+    {
+      "month_label": "2025-07",
+      "planned_pct": 0.0,
+      "actual_pct": 26.0,
+      "deviation_pct": 26.0,
+      "alert_level": "绿色",
+      "reason": "实际进度 26.0% ≥ 计划进度 0.0%，偏差 +26.0%"
+    },
+    {
+      "month_label": "2025-08",
+      "planned_pct": 20.0,
+      "actual_pct": 26.0,
+      "deviation_pct": 6.0,
+      "alert_level": "绿色",
+      "reason": "实际进度 26.0% ≥ 计划进度 20.0%，偏差 +6.0%"
+    },
+    {
+      "month_label": "2025-09",
+      "planned_pct": 20.0,
+      "actual_pct": 26.0,
+      "deviation_pct": 6.0,
+      "alert_level": "绿色",
+      "reason": "实际进度 26.0% ≥ 计划进度 20.0%，偏差 +6.0%"
+    }
+  ],
+  "overall_status": "红色",
+  "overall_reason": "里程碑维度：1个节点红色预警（桩基工程完工）；关键路径维度：2个工序红色预警（A标段-主桥/主墩桩基施工, B标段-引桥/引桥桩基施工）",
+  "recommendations": [
+    "建议大幅增加资源投入，必要时增开工作面",
+    "调整关键工序施工方案，优化施工逻辑",
+    "启动工期调整流程，重新评估竣工节点",
+    "上报项目管理委员会审批工期变更",
+    "组织专家论证会，评估加速措施可行性",
+    "与业主/监理方沟通，协商工期调整",
+    "全面排查制约因素（设备、材料、人员、天气等）",
+    "制定赶工计划并落实责任人，实行日调度制度"
+  ],
+  "key_issues": [
+    "主墩钢筋供应商产能不足，已延误2周",
+    "汛期提前，施工窗口缩短"
+  ]
+}

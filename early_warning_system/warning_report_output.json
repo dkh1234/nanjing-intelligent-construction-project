@@ -1,0 +1,284 @@
+{
+  "project_name": "陇南祁连山水泥厂新建熟料生产线项目",
+  "report_date": "2025-05-11",
+  "milestones_alert": [
+    {
+      "milestone_name": "完成全套施工图图纸设计",
+      "target_date": "2025-02-28",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "项目开工前节点，视为按期完成"
+    },
+    {
+      "milestone_name": "项目实体开工日",
+      "target_date": "2025-03-11",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "项目开工前节点，视为按期完成"
+    },
+    {
+      "milestone_name": "烧成窑尾桩基全部施工完成",
+      "target_date": "2025-04-29",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "已于2025-04-29提前/按期完成"
+    },
+    {
+      "milestone_name": "生料库桩基全部施工完成",
+      "target_date": "2025-04-26",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "已于2025-04-26提前/按期完成"
+    },
+    {
+      "milestone_name": "中控室桩基全部施工完成",
+      "target_date": "2025-05-11",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "已于2025-05-11提前/按期完成"
+    },
+    {
+      "milestone_name": "熟料库桩基全部施工完成",
+      "target_date": "2025-10-20",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "进行中，尚未到目标日期"
+    },
+    {
+      "milestone_name": "全场所有桩基工程全部完工",
+      "target_date": "2025-10-20",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，暂无状态数据"
+    },
+    {
+      "milestone_name": "全厂区工艺车间土建主体及装饰施工完成",
+      "target_date": "2026-02-28",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，暂无状态数据"
+    },
+    {
+      "milestone_name": "全部主机、辅机设备到场交付完成",
+      "target_date": "2026-03-15",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，暂无状态数据"
+    },
+    {
+      "milestone_name": "熟料线全套机电设备安装工作完成",
+      "target_date": "2026-05-20",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，暂无状态数据"
+    },
+    {
+      "milestone_name": "全线单机调试+联动调试全部完成",
+      "target_date": "2026-07-03",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，暂无状态数据"
+    },
+    {
+      "milestone_name": "生产线首次点火投产",
+      "target_date": "2026-07-04",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，暂无状态数据"
+    }
+  ],
+  "critical_path_alert": [
+    {
+      "workshop": "1.机电修车间+综合材料库",
+      "process_name": "图纸交付完成",
+      "target_date": "2025-02-28",
+      "actual_date": "2025-02-28",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "按期完成"
+    },
+    {
+      "workshop": "1.机电修车间+综合材料库",
+      "process_name": "隔墙抹灰、地面垫层浇筑施工",
+      "target_date": "2025-03-25",
+      "actual_date": "2025-03-25",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "按期完成"
+    },
+    {
+      "workshop": "1.机电修车间+综合材料库",
+      "process_name": "外墙砌筑、构造柱浇筑完成",
+      "target_date": "2025-03-20",
+      "actual_date": "2025-03-20",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "按期完成"
+    },
+    {
+      "workshop": "1.机电修车间+综合材料库",
+      "process_name": "内墙腻子、乳胶漆、门窗安装完工",
+      "target_date": "2025-03-30",
+      "actual_date": "2025-03-30",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "按期完成"
+    },
+    {
+      "workshop": "1.机电修车间+综合材料库",
+      "process_name": "车间全部土建装饰收尾交付",
+      "target_date": "2025-04-15",
+      "actual_date": "2025-04-15",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "按期完成"
+    },
+    {
+      "workshop": "2.烧成窑尾区域",
+      "process_name": "62根桩基施工",
+      "target_date": "2025-04-29",
+      "actual_date": "2025-04-29",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "按期完成"
+    },
+    {
+      "workshop": "2.烧成窑尾区域",
+      "process_name": "窑尾基础承台、主体土建施工",
+      "target_date": "2025-11-30",
+      "actual_date": null,
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，正常推进中"
+    },
+    {
+      "workshop": "2.烧成窑尾区域",
+      "process_name": "窑尾设备基础交付安装",
+      "target_date": "2025-12-15",
+      "actual_date": null,
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，正常推进中"
+    },
+    {
+      "workshop": "3.生料均化库区域",
+      "process_name": "32根生料库桩基全部浇筑完成",
+      "target_date": "2025-04-26",
+      "actual_date": "2025-04-26",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "按期完成"
+    },
+    {
+      "workshop": "3.生料均化库区域",
+      "process_name": "库体滑模、仓体土建施工",
+      "target_date": "2025-12-20",
+      "actual_date": null,
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，正常推进中"
+    },
+    {
+      "workshop": "3.生料均化库区域",
+      "process_name": "库内设备基础完工交付",
+      "target_date": "2026-01-10",
+      "actual_date": null,
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，正常推进中"
+    },
+    {
+      "workshop": "4.中控室区域",
+      "process_name": "34根中控室桩基全部完工",
+      "target_date": "2025-05-11",
+      "actual_date": "2025-05-11",
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "按期完成"
+    },
+    {
+      "workshop": "4.中控室区域",
+      "process_name": "中控室主体框架施工",
+      "target_date": "2025-11-10",
+      "actual_date": null,
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，正常推进中"
+    },
+    {
+      "workshop": "4.中控室区域",
+      "process_name": "中控系统基础完工",
+      "target_date": "2025-12-01",
+      "actual_date": null,
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，正常推进中"
+    },
+    {
+      "workshop": "5.熟料库区域",
+      "process_name": "143根熟料库桩基全部施工完成",
+      "target_date": "2025-10-20",
+      "actual_date": null,
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，正常推进中"
+    },
+    {
+      "workshop": "5.熟料库区域",
+      "process_name": "熟料库仓体土建施工",
+      "target_date": "2026-02-20",
+      "actual_date": null,
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，正常推进中"
+    },
+    {
+      "workshop": "5.熟料库区域",
+      "process_name": "熟料输送设备基础完工交付",
+      "target_date": "2026-02-28",
+      "actual_date": null,
+      "alert_level": "绿色",
+      "delay_days": 0,
+      "reason": "目标日期未到，正常推进中"
+    }
+  ],
+  "progress_curve_alert": [
+    {
+      "month_label": "2025-03",
+      "planned_pct": 16.67,
+      "actual_pct": 42.37,
+      "deviation_pct": 25.7,
+      "alert_level": "绿色",
+      "reason": "实际进度 42.4% ≥ 计划进度 16.7%，偏差 +25.7%"
+    },
+    {
+      "month_label": "2025-04",
+      "planned_pct": 33.33,
+      "actual_pct": 42.37,
+      "deviation_pct": 9.04,
+      "alert_level": "绿色",
+      "reason": "实际进度 42.4% ≥ 计划进度 33.3%，偏差 +9.0%"
+    },
+    {
+      "month_label": "2025-05",
+      "planned_pct": 41.67,
+      "actual_pct": 42.37,
+      "deviation_pct": 0.7,
+      "alert_level": "绿色",
+      "reason": "实际进度 42.4% ≥ 计划进度 41.7%，偏差 +0.7%"
+    }
+  ],
+  "overall_status": "绿色",
+  "overall_reason": "所有维度均正常，项目整体推进顺利",
+  "recommendations": [
+    "继续按计划执行，保持当前进度节奏",
+    "定期（每周）跟踪里程碑节点状态",
+    "做好资源储备，防范潜在风险"
+  ],
+  "key_issues": [
+    "熟料库区域地下大量漂石，桩基施工效率仅1~2根/天",
+    "旋挖钻机多次故障需维修",
+    "钻头掉入桩孔2次",
+    "3#旋挖钻机履带宽度3.5米大于进场道路宽度3.4米，设备进场受阻"
+  ]
+}
