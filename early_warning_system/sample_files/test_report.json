@@ -1,0 +1,31 @@
+{
+  "project_name": "测试项目-XX大桥工程",
+  "report_period": "2025-06-01 ~ 2025-09-01",
+  "key_milestones_status": {
+    "桩基工程": {
+      "status": "completed",
+      "actual_date": "2025-09-15"
+    },
+    "墩身施工": {
+      "status": "in_progress",
+      "actual_progress": 30,
+      "total": 100,
+      "issues": "钢筋供应延迟2周"
+    }
+  },
+  "critical_path_current": {
+    "主桥": {
+      "key_pile_completed": 48,
+      "piling_done": true
+    },
+    "引桥": {
+      "key_pile_completed": 24,
+      "piling_done": false,
+      "remaining": 36
+    }
+  },
+  "key_issues": [
+    "主墩钢筋供应商产能不足，已延误2周",
+    "汛期提前，施工窗口缩短"
+  ]
+}
