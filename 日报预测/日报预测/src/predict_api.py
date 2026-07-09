@@ -135,7 +135,7 @@ def build_features(df):
     return df
 
 
-def predict(project_code, weeks=4):
+def predict(project_code, weeks=4, last_day_text=""):
     """核心预测函数，返回 dict 可直接序列化为 JSON。"""
     # 加载
     models, feature_cols = load_models()
@@ -269,7 +269,7 @@ CN_TO_EN_COL = {
 }
 
 
-def _predict_one(models, feature_cols, df, last_day_text=""):
+def _predict_one(models, feature_cols, df, last_day_text="", weekly_df=None, sequence_prediction=None):
     """核心单周预测（接收 build_features 后的 DataFrame），返回 result dict"""
     last_row = df.iloc[-1]
     next_week_num = int(last_row["week_num"]) + 1
@@ -342,17 +342,54 @@ def _predict_one(models, feature_cols, df, last_day_text=""):
         result["weather"] = {"rain_days": _py(max(0, min(7, int(rain_val))))}
 
     # 生成预测日报文本
-    result["report_text"] = _generate_report_text(result, predictions, last_row, last_day_text)
+    result["report_text"] = _generate_report_text(
+        result, predictions, last_row, last_day_text,
+        weekly_df=weekly_df, sequence_prediction=sequence_prediction
+    )
 
     return result, predictions, next_week_num, next_date
 
 
-def _generate_report_text(result, predictions, last_row, last_day_text=""):
+def _build_path_detail_section(sequence_prediction, result):
+    """用 sequence_prediction 的 report_line 生成施工情况段落"""
+    lines = ["三、施工情况："]
+    if sequence_prediction and sequence_prediction.get("active_paths"):
+        idx = 1
+        for p in sequence_prediction["active_paths"]:
+            if idx > 8:
+                break
+            report_line = p.get("report_line", "")
+            if report_line:
+                lines.append(f"{idx}.{report_line}")
+                idx += 1
+    if len(lines) == 1:
+        # 无路径预测，回退到活动分类
+        activity = result.get("activity", {})
+        idx = 1
+        for key, label in [("土建活动频次", "土建"), ("钢结构活动频次", "钢结构"),
+                           ("设备安装活动频次", "设备安装"), ("装修活动频次", "装修")]:
+            if key in activity and activity[key].get("value", 0) > 0:
+                lines.append(f"{idx}.{label}活动：{activity[key]['value']} 次；")
+                idx += 1
+    return lines
+
+
+def _replace_construction_section(text, detail_lines):
+    """替换日报文本中的施工情况段"""
+    import re as _re
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    section_text = "\n".join(detail_lines)
+    pat = r"((?:三[、\.．]?\s*)?施工情况[：:]?\s*)(.*?)(?=(?:\n\s*(?:[四4五5][、\.．]|备注))|\s*$)"
+    if _re.search(pat, normalized, flags=_re.S):
+        return _re.sub(pat, section_text + "\n", normalized, count=1, flags=_re.S).strip()
+    return (normalized.rstrip() + "\n\n" + section_text).strip()
+
+
+def _generate_report_text(result, predictions, last_row, last_day_text="", weekly_df=None, sequence_prediction=None):
     """根据预测结果生成符合原始日报格式的文本，以最后一天原文为模板"""
     date_str = result.get("predict_dates", "").split(" ~ ")[0]
     rain = result.get("weather", {}).get("rain_days", 0)
 
-    # 天气描述
     if rain <= 1:
         weather_desc = "晴"
     elif rain <= 3:
@@ -360,23 +397,21 @@ def _generate_report_text(result, predictions, last_row, last_day_text=""):
     else:
         weather_desc = "阴有雨"
 
-    # 如果有最后一天的原文，用它做模板只替换日期行
     if last_day_text:
         lines = last_day_text.split("\n")
-        # 替换第一行（日期行）的日期和天气
         if lines:
             first = lines[0]
-            # 替换日期: 2025-04-12 → 预测日期
             import re as _re
             old_date = _re.search(r"(\d{4}-\d{1,2}-\d{1,2})", first)
             if old_date:
                 first = first.replace(old_date.group(1), date_str)
-            # 替换天气
             old_weather = _re.search(r"（[^）]+）", first)
             if old_weather:
                 first = first.replace(old_weather.group(0), f"（{weather_desc}）")
             lines[0] = first
-        return "\n".join(lines)
+        # 替换施工情况段
+        detail_section = _build_path_detail_section(sequence_prediction, result)
+        return _replace_construction_section("\n".join(lines), detail_section)
 
     # 没有原文时用汇总数据生成
     avg_temp = float(last_row.get("avg_temp", 20)) if "avg_temp" in last_row.index else 20
@@ -399,23 +434,14 @@ def _generate_report_text(result, predictions, last_row, last_day_text=""):
             equip_parts.append(f"{label} {equipment[name]['value']} 台")
     lines.append(f"二、施工机械：{'，'.join(equip_parts)}")
 
-    activity = result.get("activity", {})
-    lines.append("三、施工情况：")
-    act_categories = [
-        ("土建活动频次", "土建"),
-        ("钢结构活动频次", "钢结构"),
-        ("设备安装活动频次", "设备安装"),
-        ("装修活动频次", "装修"),
-    ]
-    idx = 1
-    for key, label in act_categories:
-        if key in activity:
-            lines.append(f"{idx}.{label}活动：{activity[key]['value']} 次；")
-            idx += 1
+    # 施工情况：用路径级预测
+    detail_section = _build_path_detail_section(sequence_prediction, result)
+    lines.extend(detail_section)
 
-    daily_items = activity.get("每日施工条目数", {}).get("value", 0)
-    weekly_items = activity.get("每周施工条目数", {}).get("value", 0)
-    lines.append(f"每日施工条目数约 {daily_items} 条，本周预计总条目数约 {weekly_items} 条。")
+    daily_items = result.get("activity", {}).get("每日施工条目数", {}).get("value", 0)
+    weekly_items = result.get("activity", {}).get("每周施工条目数", {}).get("value", 0)
+    if daily_items or weekly_items:
+        lines.append(f"每日施工条目数约 {daily_items} 条，本周预计总条目数约 {weekly_items} 条。")
     lines.append(f"四、天气情况：预计本周降雨 {rain} 天。")
     lines.append("五、备注：以上为基于历史数据的模型预测结果，仅供参考。")
 
@@ -427,12 +453,20 @@ def predict_from_dataframe(weekly_df, predict_weeks=1, last_day_text=""):
     从周级DataFrame直接预测（不读CSV）。
 
     参数:
-        weekly_df: process_daily 输出的 DataFrame，需含 project_code, week_num, week_start 及所有特征列
+        weekly_df: process_daily 输出的 DataFrame
         predict_weeks: 预测未来几周（1-4）
-        last_day_text: 最后一天日报原文，用于生成预测日报文本
+        last_day_text: 最后一天日报原文
 
-    返回: {"weeks": [...]}
+    返回: {"weeks": [...], "sequence_prediction": {...}}
     """
+    # 路径级预测（可能没有序列模型工件）
+    sequence_prediction = None
+    try:
+        from predict_sequences import predict_sequences
+        sequence_prediction = predict_sequences(weekly_df)
+    except Exception:
+        pass
+
     models, feature_cols = load_models()
     df = weekly_df.copy()
     df["week_start"] = pd.to_datetime(df["week_start"])
@@ -460,7 +494,8 @@ def predict_from_dataframe(weekly_df, predict_weeks=1, last_day_text=""):
                 df_feat[c] = 0.0
 
         result, preds, next_week_num, next_date = _predict_one(
-            models, feature_cols, df_feat, last_day_text if i == 0 else ""
+            models, feature_cols, df_feat, last_day_text if i == 0 else "",
+            weekly_df=weekly_df, sequence_prediction=sequence_prediction if i == 0 else None
         )
         results.append(result)
 
@@ -506,7 +541,10 @@ def predict_from_dataframe(weekly_df, predict_weeks=1, last_day_text=""):
             new_row = pd.DataFrame([synthetic])
             current_df = pd.concat([current_df, new_row], ignore_index=True)
 
-    return {"weeks": results}
+    response = {"weeks": results}
+    if sequence_prediction is not None:
+        response["sequence_prediction"] = sequence_prediction
+    return response
 
 
 def list_projects():

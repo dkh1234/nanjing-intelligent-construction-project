@@ -50,6 +50,33 @@ def init_db():
             ("admin", pwd_hash, "系统管理员", "admin", 1, 0)
         )
 
+    # ---- 合同历史记录表 ----
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS contract_records (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename      TEXT    NOT NULL,
+            file_size     INTEGER,
+            project_name  TEXT,
+            contract_no   TEXT,
+            text_length   INTEGER,
+            fields_json   TEXT,
+            status        TEXT    NOT NULL DEFAULT 'success',
+            error_msg     TEXT,
+            created_at    TEXT    NOT NULL
+        )
+    """)
+    # 迁移：旧表补充列
+    for col, col_def in [
+        ("status", "TEXT NOT NULL DEFAULT 'success'"),
+        ("error_msg", "TEXT"),
+        ("start_date", "TEXT"),
+        ("end_date", "TEXT"),
+    ]:
+        try:
+            cursor.execute(f"ALTER TABLE contract_records ADD COLUMN {col} {col_def}")
+        except:
+            pass
+
     conn.commit()
     conn.close()
 

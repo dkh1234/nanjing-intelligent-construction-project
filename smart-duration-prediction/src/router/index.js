@@ -24,6 +24,12 @@ const routes = [
     meta: { title: '日报预测', requiresAuth: true }
   },
   {
+    path: '/contract-info',
+    name: 'ContractInfo',
+    component: () => import('@/views/ContractInfo.vue'),
+    meta: { title: '合同信息', requiresAuth: true }
+  },
+  {
     path: '/duration-warning',
     name: 'DurationWarning',
     component: () => import('@/views/DurationWarning.vue'),

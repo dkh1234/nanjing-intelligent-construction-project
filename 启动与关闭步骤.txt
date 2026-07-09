@@ -9,7 +9,7 @@
 1. 启动后端 API（必须先启动）
    打开终端，执行:
 
-   cd 日报预测/日报预测
+   cd 日报预测\日报预测
    .\.venv\Scripts\python.exe api_server.py
 
    启动成功标志:
@@ -25,13 +25,19 @@
    打开另一个终端，执行:
 
    cd smart-duration-prediction
-   npm install          (仅首次需要)
+   npm install                       (仅首次需要)
    npx vite --port 3000 --host
+
 
    启动成功标志:
      VITE v5.x  ready in xxx ms
 
    前端页面登录网址  http://localhost:3000/#/login
+
+   前端包含三个页面：
+     - 工期预测  /#/prediction
+     - 日报预测  /#/daily-report
+     - 用户管理  /#/admin/users  (仅管理员可见)
 
 
 二、关闭步骤

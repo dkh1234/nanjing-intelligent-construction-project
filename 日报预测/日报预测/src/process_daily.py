@@ -14,6 +14,7 @@ from datetime import timedelta
 from collections import Counter
 
 from utils import parse_date, parse_temperature, is_rainy, is_extreme, week_boundaries, validate_weekly_df
+from detail_templates import parse_activity_line
 
 # ---- 工序关键词（与甘特图工序分类对齐） ----
 WORK_CATEGORIES = {
@@ -80,6 +81,42 @@ def _classify_sub_project(text):
     return hits if hits else ["未分类"]
 
 
+def _extract_construction_items(text):
+    """提取施工情况条目，兼容“施工情况：1、...2、...”写在同一行的 Word 模板。"""
+    normalized = (
+        text.replace("\r\n", "\n")
+        .replace("\r", "\n")
+        .replace("\u00a0", " ")
+    )
+    section_match = re.search(
+        r"(?:三[、\.．]?\s*)?施工情况[：:]?\s*(.*?)(?=(?:\n\s*(?:[四4五5][、\.．]|备注))|\s*$)",
+        normalized,
+        flags=re.S,
+    )
+    body = section_match.group(1).strip() if section_match else normalized
+
+    marker_re = re.compile(r"(?:^|(?<=[\n。；;]))\s*(?:\d+[\.\、）)]|（\d+）)\s*")
+    matches = list(marker_re.finditer(body))
+    items = []
+
+    if matches:
+        for i, marker in enumerate(matches):
+            start = marker.end()
+            end = matches[i + 1].start() if i + 1 < len(matches) else len(body)
+            item = body[start:end].strip(" \n\t；;。")
+            if len(item) >= 5:
+                items.append(item)
+    else:
+        for line in body.split("\n"):
+            line = line.strip()
+            if re.match(r"^(?:\d+[\.\、）)]|（\d+）|[a-z][\.\)])", line):
+                cleaned = re.sub(r"^(?:\d+[\.\、）)]|（\d+）|[a-z][\.\)])\s*", "", line).strip()
+                if len(cleaned) >= 5:
+                    items.append(cleaned)
+
+    return items
+
+
 # ============================================================
 # 1. 单份日报解析
 # ============================================================
@@ -93,7 +130,7 @@ def parse_one_report(text, filename=""):
         "num_excavator": 0, "num_crane": 0, "num_loader": 0,
         "num_mobile_crane": 0, "num_crawler_crane": 0,
         "construction_items": 0, "work_categories": [], "sub_projects": [],
-        "source_file": filename,
+        "detail_gen": {}, "source_file": filename,
     }
 
     if not text or not isinstance(text, str):
@@ -138,24 +175,23 @@ def parse_one_report(text, filename=""):
                 rec[key] = int(m.group(1))
                 break
 
-    # 施工条目: 以数字+标点 或 全角括号数字 或 字母+标点 开头的行
-    item_count = 0
-    all_work_text = []
-    for line in lines:
-        line = line.strip()
-        if re.match(r"^(?:\d+[\.\、）)]|（\d+）|[a-z][\.\)])", line):
-            item_count += 1
-            all_work_text.append(line)
-    rec["construction_items"] = item_count
+    # 施工条目：兼容条目独立成行、以及 Word 中多个编号条目挤在同一行的格式
+    all_work_text = _extract_construction_items(text)
+    rec["construction_items"] = len(all_work_text)
 
-    # 工序分类
+    # 工序分类 + 具体数量提取
     cats = []
     subs = []
+    detail_gen = {}
     for t in all_work_text:
         cats.extend(_categorize_work(t))
         subs.extend(_classify_sub_project(t))
+        sub, qty = parse_activity_line(t)
+        if qty and "根数" in qty:
+            detail_gen[sub] = detail_gen.get(sub, 0) + qty["根数"]
     rec["work_categories"] = cats
     rec["sub_projects"] = subs
+    rec["detail_gen"] = detail_gen
 
     return rec
 
@@ -245,6 +281,13 @@ def aggregate_to_weekly(daily_df, project_code):
             all_subs.extend(subs)
         sub_counts = Counter(all_subs)
 
+        # 具体数量聚合（子区域根数）
+        detail_gen_week = {}
+        for dg in week_data["detail_gen"]:
+            if isinstance(dg, dict):
+                for k, v in dg.items():
+                    detail_gen_week[k] = detail_gen_week.get(k, 0) + v
+
         base_record = {
             "project_code": project_code,
             "week_start": w.date(),
@@ -274,6 +317,10 @@ def aggregate_to_weekly(daily_df, project_code):
             "cat_设备安装": cat_counts.get("设备安装", 0),
             "cat_装修": cat_counts.get("装修", 0),
         }
+        # 子区域具体数量列
+        for sub_name in sorted(SUB_PROJECTS.keys()):
+            key = f"detail_{sub_name}_gen"
+            base_record[key] = detail_gen_week.get(sub_name, 0)
 
         # 子项区域列：只保留出现过至少一次的区域
         for sub_name in sorted(SUB_PROJECTS.keys()):

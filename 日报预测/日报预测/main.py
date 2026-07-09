@@ -21,7 +21,7 @@ from train_model import train as train_model
 
 
 # ---- 默认路径配置 ----
-GANTT_INPUT = r"C:\Users\Kevin\Desktop\项目staff\甘特图表"
+GANTT_INPUT = r"D:\项目\甘特图表"
 DAILY_INPUT = os.path.join(os.path.dirname(__file__), "data", "daily")
 PROCESSED_DIR = os.path.join(os.path.dirname(__file__), "data", "processed")
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "models")
