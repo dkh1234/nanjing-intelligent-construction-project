@@ -1,0 +1,110 @@
+@use './variables.scss' as *;
+
+// === Reset ===
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: $font-family;
+  font-size: $font-size-body;
+  color: $color-text-primary;
+  background-color: $color-bg;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  height: 100%;
+}
+
+// === 滚动条美化 ===
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C9CDD4;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A8ABB7;
+}
+
+// === 通用卡片样式 ===
+.prediction-card {
+  background: $color-white;
+  border-radius: $radius-card;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  transition: box-shadow $transition-normal;
+
+  &:hover {
+    box-shadow: $shadow-card-hover;
+  }
+
+  &__title {
+    font-size: $font-size-card-title;
+    font-weight: 600;
+    color: $color-text-primary;
+    margin-bottom: $spacing-md;
+    padding-left: 12px;
+    border-left: 3px solid $color-primary;
+  }
+
+  &__content {
+    padding: 0;
+  }
+}
+
+// === 蓝色渐变按钮 ===
+.btn-predict {
+  width: 100%;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  border-radius: $radius-button;
+  background: linear-gradient(135deg, $color-primary, #4096FF);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: linear-gradient(135deg, #4096FF, $color-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(22, 119, 255, 0.35);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &.is-loading {
+    pointer-events: none;
+    opacity: 0.8;
+  }
+}
+
+// === fade 过渡 ===
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

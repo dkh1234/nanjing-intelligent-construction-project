@@ -1,0 +1,51 @@
+// === 颜色系统 ===
+$color-primary-dark:  #0B1F3A;
+$color-primary:       #1677FF;
+$color-primary-hover: #4096FF;
+$color-primary-light: #E6F4FF;
+$color-bg:            #f5f7fb;
+$color-white:         #FFFFFF;
+$color-text-primary:  #1D2129;
+$color-text-secondary:#86909C;
+$color-text-placeholder: #C9CDD4;
+$color-border:        #E5E6EB;
+$color-border-light:  #F2F3F5;
+$color-success:       #00B42A;
+$color-warning:       #FF7D00;
+$color-danger:        #F53F3F;
+
+// === 侧边栏 ===
+$sidebar-width:       140px;
+$sidebar-collapsed:   54px;
+
+// === Header ===
+$header-height:       56px;
+
+// === 阴影 ===
+$shadow-card:         0 2px 12px rgba(0, 0, 0, 0.06);
+$shadow-card-hover:   0 4px 16px rgba(0, 0, 0, 0.10);
+
+// === 圆角 ===
+$radius-card:         12px;
+$radius-button:       6px;
+$radius-input:        6px;
+
+// === 间距 ===
+$spacing-xs:          8px;
+$spacing-sm:          12px;
+$spacing-md:          16px;
+$spacing-lg:          24px;
+$spacing-xl:          32px;
+$spacing-xxl:         48px;
+
+// === 字体 ===
+$font-family:         "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+$font-size-title:     24px;
+$font-size-card-title:18px;
+$font-size-section:   16px;
+$font-size-body:      14px;
+$font-size-caption:   12px;
+
+// === 过渡 ===
+$transition-normal:   0.3s ease;
+$transition-fast:     0.2s ease;
