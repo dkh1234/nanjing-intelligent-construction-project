@@ -1,0 +1,9 @@
+{
+  "trained_date": "2026-07-07T15:50:07.571437",
+  "paths": 24,
+  "files": [
+    "path_action_profile.json",
+    "path_action_transitions.json",
+    "path_recent_context.json"
+  ]
+}
