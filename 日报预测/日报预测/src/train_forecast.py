@@ -113,13 +113,14 @@ BASE_FEATURES = [
 
 
 def _detect_features(df):
-    """从数据中自动检测子项区域列和所有可用特征。"""
+    """从数据中自动检测子项区域列、detail列和所有可用特征。"""
     sub_cols = sorted([c for c in df.columns
                        if c.startswith("sub_")
                        and c not in {"sub_count", "sub_diversity",
                                       "sub_entropy", "cum_sub_areas", "new_sub_areas"}])
-    all_features = BASE_FEATURES + sub_cols
-    return all_features, sub_cols
+    detail_cols = sorted([c for c in df.columns if c.startswith("detail_")])
+    all_features = BASE_FEATURES + sub_cols + detail_cols
+    return all_features, sub_cols, detail_cols
 
 
 # ============================================================
@@ -138,7 +139,7 @@ def build_training_pairs(df):
     df["month_cos"] = np.cos(2 * np.pi * df["month"] / 12)
 
     # 动态检测子项区域列
-    _, sub_cols = _detect_features(df)
+    _, sub_cols, detail_cols_ = _detect_features(df)
 
     # 对每个项目单独处理
     all_pairs = []
@@ -217,14 +218,19 @@ def build_training_pairs(df):
             for cn_name, en_col in TARGETS.items():
                 if en_col in p.columns:
                     pair[cn_name] = next_week[en_col]
+            # detail子区域根数标签
+            for dc in detail_cols_:
+                if dc in p.columns:
+                    pair[dc] = next_week[dc]
 
             all_pairs.append(pair)
 
     result = pd.DataFrame(all_pairs)
-    # 区分特征列和标签列
+    # 区分特征列和标签列（TARGETS keys + detail columns）
+    label_names = list(TARGETS.keys()) + detail_cols_
     feature_cols = [c for c in result.columns
-                    if c not in list(TARGETS.keys()) + ["project_code", "week_num"]]
-    label_cols = [k for k in TARGETS.keys() if k in result.columns]
+                    if c not in label_names + ["project_code", "week_num"]]
+    label_cols = [k for k in label_names if k in result.columns]
 
     print(f"  构造配对: {len(result)}条 ({df['project_code'].nunique()}项目)")
     print(f"  特征列: {len(feature_cols)}个")
@@ -354,7 +360,7 @@ def main():
     print(f"  {len(df)}周, {df['project_code'].nunique()}个项目")
 
     # 动态检测子项区域列
-    all_features, sub_cols = _detect_features(df)
+    all_features, sub_cols, detail_cols = _detect_features(df)
     print(f"  特征列: {len(all_features)}个 (含{len(sub_cols)}个子项区域)")
 
     # 配对
