@@ -37,6 +37,10 @@ export default defineConfig({
       '/api/contract': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true
+      },
+      '/api/duration-warning': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true
       }
     }
   }

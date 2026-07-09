@@ -30,6 +30,12 @@ const routes = [
     meta: { title: '合同信息', requiresAuth: true }
   },
   {
+    path: '/duration-warning',
+    name: 'DurationWarning',
+    component: () => import('@/views/DurationWarning.vue'),
+    meta: { title: '工期预警', requiresAuth: true }
+  },
+  {
     path: '/admin/users',
     name: 'UserManagement',
     component: () => import('@/views/UserManagement.vue'),
