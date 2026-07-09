@@ -316,6 +316,13 @@ from admin_routes import router as admin_router
 app.include_router(admin_router)
 
 # ============================================================
+# 5.5 工期预警路由
+# ============================================================
+
+from duration_warning_api import router as warning_router
+app.include_router(warning_router)
+
+# ============================================================
 # 6. 启动
 # ============================================================
 

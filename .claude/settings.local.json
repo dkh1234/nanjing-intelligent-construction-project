@@ -13,7 +13,8 @@
       "Bash(git -c user.name=\"中材国际\" -c user.email=\"dev@sinoma.com\" commit -m \"feat: SCSS variables and global styles\")",
       "Bash(git -C \"d:/Users/DIfy工期预测项目/smart-duration-prediction\" -c user.name=\"中材国际\" -c user.email=\"dev@sinoma.com\" add src/components/layout/AppSidebar.vue)",
       "Bash(git -C \"d:/Users/DIfy工期预测项目/smart-duration-prediction\" -c user.name=\"中材国际\" -c user.email=\"dev@sinoma.com\" commit -m \"feat: AppSidebar with collapsible navigation and 8 menu items\")",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(powershell.exe -Command '$conns = Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue; if \\($conns\\) { $conns | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }; Write-Host '\\\\''Killed'\\\\'' } else { Write-Host '\\\\''No process on 8000'\\\\'' }')"
     ]
   }
 }
