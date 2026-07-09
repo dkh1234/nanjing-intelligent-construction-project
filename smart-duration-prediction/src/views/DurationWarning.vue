@@ -17,7 +17,7 @@
               drag
               :limit="1"
               :auto-upload="false"
-              :accept="'.pdf,.doc,.docx'"
+              :accept="'.pdf,.doc,.docx,.json'"
               :file-list="planFileList"
               :before-upload="(f) => beforeUpload(f, 'plan')"
               :on-change="(f) => handleFileChange(f, 'plan')"
@@ -26,7 +26,7 @@
               <div v-if="planFileList.length === 0" class="upload-placeholder">
                 <el-icon :size="36" color="#1677FF"><UploadFilled /></el-icon>
                 <p class="upload-main-text">拖拽文件至此，或 <em>点击上传</em></p>
-                <p class="upload-hint">支持格式：pdf/doc/docx，大小不超过50MB</p>
+                <p class="upload-hint">支持格式：pdf/doc/docx/json，大小不超过50MB</p>
               </div>
             </el-upload>
           </div>
@@ -42,7 +42,7 @@
               drag
               :limit="1"
               :auto-upload="false"
-              :accept="'.pdf,.doc,.docx'"
+              :accept="'.pdf,.doc,.docx,.json'"
               :file-list="reportFileList"
               :before-upload="(f) => beforeUpload(f, 'report')"
               :on-change="(f) => handleFileChange(f, 'report')"
@@ -51,7 +51,7 @@
               <div v-if="reportFileList.length === 0" class="upload-placeholder">
                 <el-icon :size="36" color="#1677FF"><UploadFilled /></el-icon>
                 <p class="upload-main-text">拖拽文件至此，或 <em>点击上传</em></p>
-                <p class="upload-hint">支持格式：pdf/doc/docx，大小不超过50MB</p>
+                <p class="upload-hint">支持格式：pdf/doc/docx/json，大小不超过50MB</p>
               </div>
             </el-upload>
           </div>
@@ -60,7 +60,7 @@
           <el-button
             class="submit-btn"
             :loading="submitting"
-            @click="startAnalysis"
+            @click="submitAnalysis"
           >
             <el-icon :size="18"><Promotion /></el-icon>
             开始工期预警分析
@@ -68,7 +68,7 @@
         </div>
       </div>
 
-      <!-- 右侧：预警结果卡片 -->
+      <!-- 右侧：结果卡片 -->
       <div class="col-right">
         <div class="right-card">
           <div class="card-header">
@@ -85,9 +85,13 @@
             </el-empty>
           </div>
 
-          <!-- 加载状态 -->
-          <div v-else-if="pageState === 'loading'" class="result-area">
-            <el-skeleton :rows="8" animated />
+          <!-- 加载状态：分析进度步骤条 -->
+          <div v-else-if="pageState === 'loading'" class="result-area result-loading">
+            <AnalysisProgress
+              :current-step="analysisStep"
+              :loading="submitting"
+              :steps="analysisSteps"
+            />
           </div>
 
           <!-- 错误状态 -->
@@ -98,13 +102,13 @@
               :sub-title="errorMsg"
             >
               <template #extra>
-                <el-button type="primary" @click="startAnalysis">重新分析</el-button>
+                <el-button type="primary" @click="submitAnalysis">重新分析</el-button>
               </template>
             </el-result>
           </div>
 
           <!-- 结果展示 -->
-          <div v-else-if="pageState === 'result'" class="result-area">
+          <div v-else-if="pageState === 'result'" class="result-area result-scroll">
             <!-- 风险等级指示灯 -->
             <div class="risk-indicator" :class="`risk-${result.risk_level}`">
               <div class="risk-light">
@@ -155,8 +159,95 @@
               </div>
             </div>
 
+            <!-- ========== 详细报告区域 ========== -->
+            <div v-if="result.full_report" class="detail-sections">
+              <el-divider />
+
+              <!-- Tab 切换三个维度 -->
+              <el-tabs v-model="activeTab" type="border-card">
+                <!-- Tab 1: 里程碑节点状态 -->
+                <el-tab-pane name="milestones">
+                  <template #label>
+                    <span class="tab-label">
+                      <el-icon :size="16"><Flag /></el-icon>
+                      里程碑节点
+                      <el-badge
+                        v-if="fullReportMilestoneStats.red > 0"
+                        :value="fullReportMilestoneStats.red"
+                        type="danger"
+                        class="tab-badge"
+                      />
+                    </span>
+                  </template>
+                  <MilestoneTimeline :milestones="result.full_report.milestones_alert || []" />
+                </el-tab-pane>
+
+                <!-- Tab 2: 月度进度曲线 -->
+                <el-tab-pane name="progress">
+                  <template #label>
+                    <span class="tab-label">
+                      <el-icon :size="16"><TrendCharts /></el-icon>
+                      进度曲线
+                      <el-badge
+                        v-if="fullReportProgressStats.red > 0"
+                        :value="fullReportProgressStats.red"
+                        type="danger"
+                        class="tab-badge"
+                      />
+                    </span>
+                  </template>
+                  <ProgressCurveTable :curve-data="result.full_report.progress_curve_alert || []" />
+                </el-tab-pane>
+
+                <!-- Tab 3: 关键路径预警 -->
+                <el-tab-pane name="critical">
+                  <template #label>
+                    <span class="tab-label">
+                      <el-icon :size="16"><Connection /></el-icon>
+                      关键路径
+                      <el-badge
+                        v-if="fullReportCriticalStats.red > 0"
+                        :value="fullReportCriticalStats.red"
+                        type="danger"
+                        class="tab-badge"
+                      />
+                    </span>
+                  </template>
+                  <CriticalPathAlerts :alerts="result.full_report.critical_path_alert || []" />
+                </el-tab-pane>
+              </el-tabs>
+
+              <!-- 关键问题 -->
+              <div v-if="result.full_report.key_issues && result.full_report.key_issues.length" class="issues-section">
+                <div class="section-header">
+                  <el-icon :size="18" color="#F53F3F"><WarningFilled /></el-icon>
+                  <span>现场关键问题</span>
+                </div>
+                <div class="issues-list">
+                  <div v-for="(issue, idx) in result.full_report.key_issues" :key="idx" class="issue-item">
+                    <span class="issue-num">{{ idx + 1 }}</span>
+                    <span>{{ issue }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 建议措施 -->
+              <div v-if="result.full_report.recommendations && result.full_report.recommendations.length" class="recommend-section">
+                <div class="section-header">
+                  <el-icon :size="18" color="#1677FF"><Sunny /></el-icon>
+                  <span>建议措施</span>
+                </div>
+                <div class="recommend-list">
+                  <div v-for="(rec, idx) in result.full_report.recommendations" :key="idx" class="recommend-item">
+                    <el-icon :size="16" color="#1677FF"><CircleCheck /></el-icon>
+                    <span>{{ rec }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- 重新分析按钮 -->
-            <el-button class="reanalyze-btn" @click="resetAnalysis">
+            <el-button class="reanalyze-btn" @click="resetAll">
               <el-icon :size="16"><Refresh /></el-icon>
               重新分析
             </el-button>
@@ -173,9 +264,14 @@ import { ElMessage } from 'element-plus'
 import {
   Document, DataAnalysis, UploadFilled, Promotion,
   WarningFilled, Warning, InfoFilled, Timer, Right,
-  CircleCheckFilled, Refresh
+  CircleCheckFilled, Refresh, Flag, TrendCharts, Connection,
+  Sunny, CircleCheck
 } from '@element-plus/icons-vue'
 import authRequest from '@/utils/authRequest'
+import AnalysisProgress from '@/components/AnalysisProgress.vue'
+import MilestoneTimeline from '@/components/MilestoneTimeline.vue'
+import ProgressCurveTable from '@/components/ProgressCurveTable.vue'
+import CriticalPathAlerts from '@/components/CriticalPathAlerts.vue'
 
 // ========== 文件上传 ==========
 const planFile = ref(null)
@@ -185,8 +281,8 @@ const planFileList = computed(() => planFile.value ? [planFile.value] : [])
 const reportFileList = computed(() => reportFile.value ? [reportFile.value] : [])
 
 function beforeUpload(file, type) {
-  const isValid = /\.(pdf|doc|docx)$/i.test(file.name)
-  if (!isValid) { ElMessage.error('仅支持 .pdf .doc .docx 格式文件'); return false }
+  const isValid = /\.(pdf|doc|docx|json)$/i.test(file.name)
+  if (!isValid) { ElMessage.error('仅支持 .pdf .doc .docx .json 格式文件'); return false }
   if (file.size / 1024 / 1024 > 50) { ElMessage.error('文件大小不能超过50MB'); return false }
   return false
 }
@@ -206,40 +302,86 @@ const pageState = ref('empty') // empty | loading | error | result
 const submitting = ref(false)
 const errorMsg = ref('')
 
+// ========== 分析步骤模拟 ==========
+const analysisStep = ref(0)
+const analysisSteps = [
+  '上传文件',
+  '提取文本',
+  'AI解析策划书',
+  'AI解析周报',
+  '预警引擎计算',
+  '生成报告'
+]
+
+let stepTimer = null
+
+function startStepSimulation() {
+  analysisStep.value = 0
+  let step = 0
+  stepTimer = setInterval(() => {
+    if (step < analysisSteps.length - 1) {
+      step++
+      analysisStep.value = step
+    }
+  }, 3000 + Math.random() * 4000)
+}
+
+function stopStepSimulation() {
+  if (stepTimer) {
+    clearInterval(stepTimer)
+    stepTimer = null
+  }
+  analysisStep.value = analysisSteps.length - 1
+}
+
+// ========== 结果数据 ==========
 const result = reactive({
-  risk_level: '',        // green | yellow | red
+  risk_level: '',
   planned_completion_date: '',
   predicted_completion_date: '',
   delay_days: 0,
-  analysis_summary: ''
+  analysis_summary: '',
+  full_report: null
 })
 
-// ========== Mock 模式（开发调试用，联调时改为 false）==========
-const USE_MOCK = false
+// ========== 详细报告 Tab ==========
+const activeTab = ref('milestones')
 
-const mockResults = {
-  green: {
-    risk_level: 'green',
-    planned_completion_date: '2026-12-31',
-    predicted_completion_date: '2026-12-20',
-    delay_days: -11,
-    analysis_summary: '根据当前施工进度和资源配置情况分析，项目进度良好，预计可提前11天完成施工任务。各关键路径均在可控范围内，建议继续保持当前施工节奏。'
-  },
-  yellow: {
-    risk_level: 'yellow',
-    planned_completion_date: '2026-12-31',
-    predicted_completion_date: '2027-01-18',
-    delay_days: 18,
-    analysis_summary: '根据周报数据，近期因原材料供应延迟和部分工序衔接不畅，导致工期有所滞后。预计延迟18天完工，仍在可控范围内，建议加强工序协调和资源调配。'
-  },
-  red: {
-    risk_level: 'red',
-    planned_completion_date: '2026-12-31',
-    predicted_completion_date: '2027-03-15',
-    delay_days: 74,
-    analysis_summary: '根据周报分析，项目存在严重延期风险。多项关键路径节点滞后，累计延迟达74天。建议立即启动应急预案，增加施工班组和延长作业时间，并与业主沟通调整工期计划。'
+// 里程碑统计
+const fullReportMilestoneStats = computed(() => {
+  const alerts = result.full_report?.milestones_alert || []
+  let red = 0, yellow = 0, green = 0
+  for (const a of alerts) {
+    if (a.alert_level === '红色') red++
+    else if (a.alert_level === '黄色') yellow++
+    else green++
   }
-}
+  return { red, yellow, green }
+})
+
+// 进度曲线统计
+const fullReportProgressStats = computed(() => {
+  const alerts = result.full_report?.progress_curve_alert || []
+  let red = 0, yellow = 0, green = 0
+  for (const a of alerts) {
+    if (a.alert_level === '红色') red++
+    else if (a.alert_level === '黄色') yellow++
+    else green++
+  }
+  return { red, yellow, green }
+})
+
+// 关键路径统计
+const fullReportCriticalStats = computed(() => {
+  const alerts = result.full_report?.critical_path_alert || []
+  let red = 0, yellow = 0, green = 0
+  for (const a of alerts) {
+    if (a.alert_level === '红色') red++
+    else if (a.alert_level === '黄色') yellow++
+    else green++
+  }
+  return { red, yellow, green }
+})
 
 // ========== 风险等级文案 ==========
 const riskLabel = computed(() => ({
@@ -255,61 +397,55 @@ const riskDesc = computed(() => ({
 }[result.risk_level] || ''))
 
 // ========== 核心逻辑 ==========
-async function startAnalysis() {
-  // 校验
+async function submitAnalysis() {
   if (!planFile.value) { ElMessage.warning('请上传项目策划书'); return }
   if (!reportFile.value) { ElMessage.warning('请上传项目周报'); return }
 
   submitting.value = true
   pageState.value = 'loading'
+  errorMsg.value = ''
+
+  startStepSimulation()
 
   try {
-    if (USE_MOCK) {
-      // Mock 模式：随机返回绿/黄/红便于测试（实际使用时按需切换）
-      await sleep(1500)
-      const levels = ['green', 'yellow', 'red']
-      const level = levels[Math.floor(Math.random() * levels.length)]
-      Object.assign(result, mockResults[level])
-    } else {
-      // 真实 API 调用
-      const formData = new FormData()
-      formData.append('plan_file', planFile.value.raw)
-      formData.append('report_file', reportFile.value.raw)
+    const formData = new FormData()
+    formData.append('plan_file', planFile.value.raw)
+    formData.append('report_file', reportFile.value.raw)
 
-      const res = await authRequest.post('/duration-warning', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 120000
-      })
+    const res = await authRequest.post('/duration-warning', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000
+    })
 
-      const data = res?.data || res || {}
-      Object.assign(result, {
-        risk_level: data.risk_level || '',
-        planned_completion_date: data.planned_completion_date || '',
-        predicted_completion_date: data.predicted_completion_date || '',
-        delay_days: data.delay_days ?? 0,
-        analysis_summary: data.analysis_summary || ''
-      })
-    }
+    const data = res?.data || res || {}
+
+    result.risk_level = data.risk_level || ''
+    result.planned_completion_date = data.planned_completion_date || ''
+    result.predicted_completion_date = data.predicted_completion_date || ''
+    result.delay_days = data.delay_days ?? 0
+    result.analysis_summary = data.analysis_summary || ''
+    result.full_report = data.full_report || null
 
     pageState.value = 'result'
+    activeTab.value = 'milestones'
     ElMessage.success('工期预警分析完成')
   } catch (err) {
     console.error('Duration Warning API Error:', err)
     errorMsg.value = err.response?.data?.detail || err.response?.data?.message || err.message || '分析失败，请稍后重试'
     pageState.value = 'error'
   } finally {
+    stopStepSimulation()
     submitting.value = false
   }
 }
 
-function resetAnalysis() {
+function resetAll() {
+  stopStepSimulation()
   pageState.value = 'empty'
   planFile.value = null
   reportFile.value = null
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  analysisStep.value = 0
+  result.full_report = null
 }
 </script>
 
@@ -320,6 +456,8 @@ function sleep(ms) {
   padding: 0;
   height: calc(100vh - 56px - 48px);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .page-title {
@@ -334,7 +472,7 @@ function sleep(ms) {
   display: grid;
   grid-template-columns: 43% 57%;
   gap: 20px;
-  height: calc(100% - 56px);
+  flex: 1;
   overflow: hidden;
 }
 
@@ -426,6 +564,19 @@ function sleep(ms) {
   display: flex;
   flex-direction: column;
   justify-content: center;
+
+  &.result-loading {
+    justify-content: flex-start;
+    padding-top: 8px;
+  }
+
+  &.result-scroll {
+    justify-content: flex-start;
+    overflow-y: auto;
+    padding-right: 4px;
+    &::-webkit-scrollbar { width: 5px; }
+    &::-webkit-scrollbar-thumb { background: #c9cdd4; border-radius: 3px; }
+  }
 }
 
 // ====== 风险指示灯 ======
@@ -437,6 +588,7 @@ function sleep(ms) {
   border-radius: 16px;
   background: #f5f7fb;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .risk-light {
@@ -549,6 +701,7 @@ function sleep(ms) {
   color: #4e5969;
   line-height: 1.7;
   margin-bottom: 20px;
+  flex-shrink: 0;
 
   .el-icon {
     margin-top: 2px;
@@ -559,7 +712,8 @@ function sleep(ms) {
 
 // ====== 时间对比 ======
 .time-compare {
-  margin-bottom: 20px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .time-compare-title {
@@ -642,6 +796,122 @@ function sleep(ms) {
   }
 }
 
+// ====== 详细报告区域 ======
+.detail-sections {
+  flex-shrink: 0;
+  margin-top: 4px;
+
+  :deep(.el-divider) {
+    margin: 8px 0 16px;
+  }
+
+  // Tabs 样式微调
+  :deep(.el-tabs--border-card) {
+    border: 1px solid #e5e6eb;
+    border-radius: 10px;
+    box-shadow: none;
+  }
+
+  :deep(.el-tabs__header) {
+    background: #f5f7fb;
+    border-radius: 10px 10px 0 0;
+    border-bottom: 1px solid #e5e6eb;
+  }
+
+  :deep(.el-tabs__content) {
+    padding: 16px;
+  }
+}
+
+.tab-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab-badge {
+  margin-left: 4px;
+}
+
+// ====== 关键问题 ======
+.issues-section {
+  margin-top: 20px;
+  padding: 16px;
+  background: #fef2f2;
+  border-radius: 10px;
+  border-left: 3px solid #F53F3F;
+}
+
+.issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.issue-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #4e5969;
+  line-height: 1.5;
+}
+
+.issue-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #F53F3F;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+// ====== 建议措施 ======
+.recommend-section {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f0f5ff;
+  border-radius: 10px;
+  border-left: 3px solid #1677FF;
+}
+
+.recommend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.recommend-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #4e5969;
+  line-height: 1.5;
+
+  .el-icon {
+    margin-top: 1px;
+    flex-shrink: 0;
+  }
+}
+
+// ====== 通用 section-header ======
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1d2129;
+}
+
 // ====== 重新分析按钮 ======
 .reanalyze-btn {
   width: 100%;
@@ -653,6 +923,8 @@ function sleep(ms) {
   color: #4e5969;
   background: #fff;
   transition: all .2s;
+  margin-top: 20px;
+  flex-shrink: 0;
 
   &:hover {
     border-color: #1677FF;

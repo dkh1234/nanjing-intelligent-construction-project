@@ -37,7 +37,7 @@
 
 <script setup>
 import {
-  Timer, DataAnalysis, Setting, DocumentCopy,
+  Timer, DataAnalysis, Setting, Warning, DocumentCopy,
   Fold, Expand
 } from '@element-plus/icons-vue'
 import { computed } from 'vue'
@@ -54,9 +54,10 @@ const emit = defineEmits(['update:collapsed', 'menu-select'])
 
 const menuItems = computed(() => {
   const items = [
-    { path: '/prediction',    label: '工期预测', icon: Timer },
-    { path: '/daily-report',  label: '日报预测', icon: DataAnalysis },
-    { path: '/contract-info', label: '合同信息', icon: DocumentCopy },
+    { path: '/prediction',       label: '工期预测', icon: Timer },
+    { path: '/daily-report',     label: '日报预测', icon: DataAnalysis },
+    { path: '/duration-warning', label: '工期预警', icon: Warning },
+    { path: '/contract-info',    label: '合同信息', icon: DocumentCopy },
   ]
   if (authStore.isAdmin) {
     items.push({ path: '/admin/users', label: '用户管理', icon: Setting })
